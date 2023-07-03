@@ -1,0 +1,266 @@
+def answer_one():
+    # YOUR CODE HERE
+    Energy = pd.read_excel('assets/Energy Indicators.xls',skiprows=17,usecols=[1,3,4,5], 
+                   names=['Country', 'Energy Supply', 'Energy Supply per Capita', '% Renewable'], skipfooter=38)
+    newname = {"Republic of Korea": "South Korea",
+           "United States of America": "United States",
+           "United Kingdom of Great Britain and Northern Ireland": "United Kingdom",
+           "China, Hong Kong Special Administrative Region": "Hong Kong",
+          "Bolivia (Plurinational State of)":"Bolivia",
+           "Falkland Islands (Malvinas)":"Falkland Islands",
+           "Iran (Islamic Republic of)":"Iran",
+           "Micronesia (Federated States of)":"Micronesia",
+           "Sint Maarten (Dutch part)":"Sint Maarten",
+           "Venezuela (Bolivarian Republic of)":"Venezuela"
+          }
+    Energy.replace({"Country": newname},inplace = True)
+    Energy.Country = Energy.Country.apply(lambda x: str.strip(x))
+    Energy.replace('...', np.nan,inplace = True)
+    Energy['Energy Supply'] *= 1000000
+    
+    ###################################################################################
+    GDP = pd.read_csv('assets/world_bank.csv', skiprows=4)
+    GDP.replace({"Korea, Rep.": "South Korea", 
+                "Iran, Islamic Rep.": "Iran",
+                "Hong Kong SAR, China": "Hong Kong"}, inplace=True)
+    GDP.rename(columns={'Country Name': 'Country'}, inplace=True)
+    #################################################################################
+    ScimEn = pd.read_excel('assets/scimagojr-3.xlsx')
+
+    #################################################################################
+    df = pd.merge(pd.merge(Energy, GDP, on='Country'), ScimEn, on='Country')
+    df.set_index('Country',inplace=True)
+    df = df[['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']]
+    df = (df.loc[df['Rank'].isin([i for i in range(1, 16)])])
+    df.sort_values('Rank',inplace=True)
+    return df
+    raise NotImplementedError()
+
+
+assert type(answer_one()) == pd.DataFrame, "Q1: You should return a DataFrame!"
+
+assert answer_one().shape == (15,20), "Q1: Your DataFrame should have 20 columns and 15 entries!"
+
+def answer_two():
+    # YOUR CODE HERE
+    Energy = pd.read_excel('assets/Energy Indicators.xls',skiprows=17,usecols=[1,3,4,5], 
+                   names=['Country', 'Energy Supply', 'Energy Supply per Capita', '% Renewable'], skipfooter=38)
+    newname = {"Republic of Korea": "South Korea",
+           "United States of America": "United States",
+           "United Kingdom of Great Britain and Northern Ireland": "United Kingdom",
+           "China, Hong Kong Special Administrative Region": "Hong Kong",
+          "Bolivia (Plurinational State of)":"Bolivia",
+           "Falkland Islands (Malvinas)":"Falkland Islands",
+           "Iran (Islamic Republic of)":"Iran",
+           "Micronesia (Federated States of)":"Micronesia",
+           "Sint Maarten (Dutch part)":"Sint Maarten",
+           "Venezuela (Bolivarian Republic of)":"Venezuela"
+          }
+    Energy.replace({"Country": newname},inplace = True)
+    Energy.Country = Energy.Country.apply(lambda x: str.strip(x))
+    Energy.replace('...', np.nan,inplace = True)
+    Energy['Energy Supply'] *= 1000000
+    
+    ###################################################################################
+    GDP = pd.read_csv('assets/world_bank.csv', skiprows=4)
+    GDP.replace({"Korea, Rep.": "South Korea", 
+                "Iran, Islamic Rep.": "Iran",
+                "Hong Kong SAR, China": "Hong Kong"}, inplace=True)
+    GDP.rename(columns={'Country Name': 'Country'}, inplace=True)
+    #################################################################################
+    ScimEn = pd.read_excel('assets/scimagojr-3.xlsx')
+
+    ################################################################################
+    union = pd.merge(pd.merge(Energy, GDP, on='Country', how='outer'), ScimEn, on='Country', how='outer')
+    intersect = pd.merge(pd.merge(Energy, GDP, on='Country', how= 'inner'), ScimEn, on='Country', how= 'inner')
+    
+    df = len(union) - len(intersect)
+    return df
+    raise NotImplementedError()
+
+def answer_three():
+    # YOUR CODE HERE
+    Top15 = answer_one()
+    col = ['2006', '2007', '2008','2009', '2010', '2011', '2012', '2013', '2014', '2015']
+    avgGDP = Top15[col].mean(axis=1,skipna = True)
+    avgGDP = avgGDP.sort_values(ascending = False)
+    return (avgGDP)
+
+    raise NotImplementedError()
+
+assert type(answer_three()) == pd.Series, "Q3: You should return a Series!"
+
+def answer_four():
+    # YOUR CODE HERE
+    Top15= answer_one()
+    avgGDP6 = answer_three().iloc[5] # 6the largest Avg GDP
+    country_name = answer_three().index[5] # name of country
+    
+    GDPchng=(Top15.loc[country_name]['2015']-Top15.loc[country_name]['2006'])
+    return GDPchng
+    raise NotImplementedError()
+
+def answer_five():
+    # YOUR CODE HERE
+    Top15 = answer_one()
+    col = ['Energy Supply per Capita']
+    Avgpercapita = Top15[col].mean()
+    return Avgpercapita[0]
+    raise NotImplementedError()
+
+def answer_six():
+    # YOUR CODE HERE
+    Top15 = answer_one()
+    col = ['% Renewable']
+    percentage = Top15[col].max(skipna=True)
+    name = Top15[col].idxmax(skipna = True)
+    
+    return(name[0], percentage[0])
+    raise NotImplementedError()
+
+assert type(answer_six()) == tuple, "Q6: You should return a tuple!"
+
+assert type(answer_six()[0]) == str, "Q6: The first element in your result should be the name of the country!"
+
+def answer_seven():
+    # YOUR CODE HERE
+    Top15 = answer_one()
+    Top15['Citation-Ratio']=Top15.loc[:,'Self-citations']/Top15.loc[:,'Citations']
+    ratio = Top15.sort_values(by='Citation-Ratio',ascending = False).iloc[0]
+    return (ratio.name,ratio['Citation-Ratio'])
+    raise NotImplementedError()
+
+assert type(answer_seven()) == tuple, "Q7: You should return a tuple!"
+
+assert type(answer_seven()[0]) == str, "Q7: The first element in your result should be the name of the country!"
+
+def answer_eight():
+    # YOUR CODE HERE
+    Top15 = answer_one()
+    Top15['Estpop']=Top15.loc[:,'Energy Supply']/Top15.loc[:,'Energy Supply per Capita']
+    Third = Top15.sort_values(by='Estpop',ascending = False).iloc[2]
+    return (Third.name)
+    raise NotImplementedError()
+
+assert type(answer_eight()) == str, "Q8: You should return the name of the country!"
+def answer_nine():
+    # YOUR CODE HERE
+    Top15 = answer_one()
+    Top15['PopEst'] = Top15['Energy Supply'] / Top15['Energy Supply per Capita']
+    Top15['Citable docs per Capita'] = Top15['Citable documents'] / Top15['PopEst']
+    Top15['Citable docs per Capita']=np.float64(Top15['Citable docs per Capita'])
+    Top15['Energy Supply per Capita']=np.float64(Top15['Energy Supply per Capita'])
+    cor = Top15['Citable docs per Capita'].corr(Top15['Energy Supply per Capita'], method = "pearson")
+    return cor
+    raise NotImplementedError()
+
+def plot9():
+    import matplotlib as plt
+    %matplotlib inline
+    
+    Top15 = answer_one()
+    Top15['PopEst'] = Top15['Energy Supply'] / Top15['Energy Supply per Capita']
+    Top15['Citable docs per Capita'] = Top15['Citable documents'] / Top15['PopEst']
+    Top15.plot(x='Citable docs per Capita', y='Energy Supply per Capita', kind='scatter', xlim=[0, 0.0006])
+
+assert answer_nine() >= -1. and answer_nine() <= 1., "Q9: A valid correlation should between -1 to 1!"
+
+def answer_ten():
+    # YOUR CODE HERE
+    Top15 = answer_one()
+    renewable_mean = Top15['% Renewable'].median()   
+    Top15['HighRenew']=Top15['% Renewable'].map(lambda x:1 if x>=renewable_mean else 0)
+    Top15.sort_values(by='Rank',ascending = True)
+    return(Top15['HighRenew'])
+    raise NotImplementedError()
+
+assert type(answer_ten()) == pd.Series, "Q10: You should return a Series!"
+
+def answer_eleven():
+    # YOUR CODE HERE
+    ContinentDict  = {'China':'Asia', 
+                  'United States':'North America', 
+                  'Japan':'Asia', 
+                  'United Kingdom':'Europe', 
+                  'Russian Federation':'Europe', 
+                  'Canada':'North America', 
+                  'Germany':'Europe', 
+                  'India':'Asia',
+                  'France':'Europe', 
+                  'South Korea':'Asia', 
+                  'Italy':'Europe', 
+                  'Spain':'Europe', 
+                  'Iran':'Asia',
+                  'Australia':'Australia', 
+                  'Brazil':'South America'}
+    Top15 = answer_one()
+    Top15['PopEst'] = Top15['Energy Supply'] / Top15['Energy Supply per Capita']
+    Top15.reset_index(inplace=True)
+    Top15['continent'] = Top15['Country'].map(ContinentDict)
+    grouped = Top15.groupby('continent')['PopEst'].agg(['size',"sum", "mean", "std"])
+    return grouped
+    raise NotImplementedError()
+
+assert type(answer_eleven()) == pd.DataFrame, "Q11: You should return a DataFrame!"
+
+assert answer_eleven().shape[0] == 5, "Q11: Wrong row numbers!"
+
+assert answer_eleven().shape[1] == 4, "Q11: Wrong column numbers!"
+
+def answer_twelve():
+    # YOUR CODE HERE
+    Top15 = answer_one()
+    ContinentDict  = {'China':'Asia', 
+                  'United States':'North America', 
+                  'Japan':'Asia', 
+                  'United Kingdom':'Europe', 
+                  'Russian Federation':'Europe', 
+                  'Canada':'North America', 
+                  'Germany':'Europe', 
+                  'India':'Asia',
+                  'France':'Europe', 
+                  'South Korea':'Asia', 
+                  'Italy':'Europe', 
+                  'Spain':'Europe', 
+                  'Iran':'Asia',
+                  'Australia':'Australia', 
+                  'Brazil':'South America'}
+    Top15["bins"] = pd.cut(Top15["% Renewable"], 5)
+    
+    return Top15.groupby([ContinentDict, Top15['bins']]).size()
+    raise NotImplementedError()
+
+
+assert type(answer_twelve()) == pd.Series, "Q12: You should return a Series!"
+
+assert len(answer_twelve()) == 25, "Q12: Wrong result numbers!"
+
+
+def answer_thirteen():
+    # YOUR CODE HERE
+    Top15 = answer_one()
+    Top15['PopEst'] = Top15['Energy Supply'] / Top15['Energy Supply per Capita']
+    Top15['PopEst']=Top15['PopEst'].apply(lambda x:format(x,','))
+    return (Top15['PopEst'])
+    raise NotImplementedError()
+
+assert type(answer_thirteen()) == pd.Series, "Q13: You should return a Series!"
+
+assert len(answer_thirteen()) == 15, "Q13: Wrong result numbers!"
+
+def plot_optional():
+    import matplotlib as plt
+    %matplotlib inline
+    Top15 = answer_one()
+    ax = Top15.plot(x='Rank', y='% Renewable', kind='scatter', 
+                    c=['#e41a1c','#377eb8','#e41a1c','#4daf4a','#4daf4a','#377eb8','#4daf4a','#e41a1c',
+                       '#4daf4a','#e41a1c','#4daf4a','#4daf4a','#e41a1c','#dede00','#ff7f00'], 
+                    xticks=range(1,16), s=6*Top15['2014']/10**10, alpha=.75, figsize=[16,6]);
+
+    for i, txt in enumerate(Top15.index):
+        ax.annotate(txt, [Top15['Rank'][i], Top15['% Renewable'][i]], ha='center')
+
+    print("This is an example of a visualization that can be created to help understand the data. \
+This is a bubble chart showing % Renewable vs. Rank. The size of the bubble corresponds to the countries' \
+2014 GDP, and the color corresponds to the continent.")
+
